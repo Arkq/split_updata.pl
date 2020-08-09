@@ -20,7 +20,7 @@
 #   Comment       : Added filename autodetection and improved logging
 #
 #########################################################################################
- 
+
 use strict;
 use warnings;
 
@@ -28,12 +28,12 @@ my $CRC_CHECK= -e "crc" && -x _;
 
 # Turn on print flushing.
 $|++;
- 
+
 # Unsigned integers are 4 bytes.
 use constant UINT_SIZE => 4;
- 
-# If a filename wasn't specified on the commmand line then
-# assume the file to be unpacked is under current directory. 
+
+# If a filename wasn't specified on the command line then
+# assume the file to be unpacked is under current directory.
 my $FILENAME = undef;
 my $matching = '.';
 if (@ARGV) {
@@ -42,13 +42,13 @@ if (@ARGV) {
     $matching = $ARGV[1];
   }
 }
- 
+
 open(INFILE, $FILENAME) or die "Cannot open $FILENAME: $!\n";
 binmode INFILE;
- 
+
 # Skip the first 92 bytes, they're blank.
 #seek(INFILE, 92, 0);
- 
+
 # We'll dump the files into a folder called "output".
 my $fileLoc=0;
 my $BASEPATH = "output/";
@@ -63,7 +63,7 @@ while (!eof(INFILE))
 }
 
 close INFILE;
- 
+
 
 # Find the next file block in the main file
 sub find_next_file
@@ -81,14 +81,14 @@ sub find_next_file
 
 	return($_fileLoc + $_skipped);
 }
- 
+
 # Unpack a file block and output the payload to a file.
 sub dump_file {
     my $buffer = undef;
     my $calculatedCRC = undef;
     my $sourceCRC = undef;
     my $matching = $_[0];
-    
+
     # Verify the identifier matches.
     read(INFILE, $buffer, UINT_SIZE); # HeaderId
     unless ($buffer eq "\x55\xAA\x5A\xA5") { die "Unrecognised file format. Wrong identifier.\n"; }
@@ -116,11 +116,11 @@ sub dump_file {
     # Grab the checksum of the file
     read(INFILE, $buffer, $headerLength-98);
     $sourceCRC=slimhexdump($buffer);
-    
+
     my ($fileName) = "$fileType" . ".img";
     if ($fileName =~ /$matching/) {
       print "extracting $fileName ($fileSize)...";
-    
+
       # Dump the payload.
       read(INFILE, $buffer, $dataLength);
       open(OUTFILE, ">$BASEPATH$fileName") or die "Unable to create $fileName: $!\n";
@@ -147,16 +147,16 @@ sub dump_file {
       seek(INFILE, $dataLength, 1);
     }
     print " $fileType $fileSize $fileDate $fileTime";
-    
+
     print "\n";
-    
+
     # Ensure we finish on a 4 byte boundary alignment.
     my $remainder = UINT_SIZE - (tell(INFILE) % UINT_SIZE);
     if ($remainder < UINT_SIZE) {
     	# We can ignore the remaining padding.
     	read(INFILE, $buffer, $remainder);
     }
-    
+
     return (tell(INFILE));
 }
 
@@ -199,7 +199,7 @@ sub hexdump ()
 
 	return ($ret_str);
 }
-	
+
 sub slimhexdump ()
 {
 	my $i;
@@ -218,11 +218,11 @@ sub slimhexdump ()
 
 sub prettyBytes {
 	my $size = $_[0];
-	
+
 	foreach ('B','KB','MB','GB','TB','PB')
 	{
 		return sprintf("%.2f",$size)."$_" if $size < 1024;
 		$size /= 1024;
 	}
-	
+
 }
